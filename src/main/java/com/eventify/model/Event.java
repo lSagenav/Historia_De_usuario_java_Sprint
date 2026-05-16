@@ -1,26 +1,30 @@
 package com.eventify.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDate;
 
+@Entity
+@Table(name = "events")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Evento registrado en el catalogo interno de Eventify")
+@Builder
+@Schema(description = "Entidad de eventos")
 public class Event {
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY, example = "1")
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Schema(example = "Conferencia Tech")
+    @Column(nullable = false, length = 120)
     private String nombre;
 
-    @Schema(example = "2026-06-20")
+    @Column(nullable = false)
     private LocalDate fecha;
 
-    @Schema(example = "Evento de tecnologia para la comunidad")
+    @Column(nullable = false, length = 255)
     private String descripcion;
 }

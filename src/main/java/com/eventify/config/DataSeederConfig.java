@@ -2,8 +2,8 @@ package com.eventify.config;
 
 import com.eventify.model.Event;
 import com.eventify.model.Venue;
-import com.eventify.service.EventService;
-import com.eventify.service.VenueService;
+import com.eventify.repository.EventRepository;
+import com.eventify.repository.VenueRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -15,14 +15,24 @@ import java.time.LocalDate;
 public class DataSeederConfig {
 
     @Bean
-    @ConditionalOnProperty(name = "eventify.seed.enabled", havingValue = "true", matchIfMissing = true)
-    public CommandLineRunner seedData(EventService eventService, VenueService venueService) {
+    @ConditionalOnProperty(name = "eventify.seed.enabled", havingValue = "true")
+    CommandLineRunner seedData(EventRepository eventRepository, VenueRepository venueRepository) {
         return args -> {
-            venueService.create(new Venue(null, "Movistar Arena", "Diagonal 61C #26-36, Bogota", 14000));
-            venueService.create(new Venue(null, "Centro de Convenciones", "Av. Principal 123", 800));
+            if (eventRepository.count() == 0) {
+                eventRepository.save(Event.builder()
+                        .nombre("Tech Conference")
+                        .fecha(LocalDate.now().plusDays(10))
+                        .descripcion("Evento de tecnologia")
+                        .build());
+            }
 
-            eventService.create(new Event(null, "Concierto Rock", LocalDate.now().plusDays(30), "Evento musical de apertura"));
-            eventService.create(new Event(null, "Conferencia Tech", LocalDate.now().plusDays(45), "Evento de tecnologia y comunidad"));
+            if (venueRepository.count() == 0) {
+                venueRepository.save(Venue.builder()
+                        .nombre("Centro de Eventos Medellin")
+                        .direccion("El Poblado")
+                        .capacidad(500)
+                        .build());
+            }
         };
     }
 }

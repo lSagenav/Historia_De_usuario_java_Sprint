@@ -1,24 +1,26 @@
 package com.eventify.model;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
+@Entity
+@Table(name = "venues")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(description = "Lugar disponible para realizar eventos")
+@Builder
 public class Venue {
-    @Schema(accessMode = Schema.AccessMode.READ_ONLY, example = "1")
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Schema(example = "Centro de Convenciones")
+    @Column(nullable = false, length = 120)
     private String nombre;
 
-    @Schema(example = "Av. Principal 123")
+    @Column(nullable = false, length = 200)
     private String direccion;
 
-    @Schema(example = "800")
+    @Column(nullable = false)
     private Integer capacidad;
 }

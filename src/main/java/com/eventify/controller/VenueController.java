@@ -2,36 +2,44 @@ package com.eventify.controller;
 
 import com.eventify.model.Venue;
 import com.eventify.service.VenueService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/venues")
 @RequiredArgsConstructor
-@Tag(name = "Lugares", description = "Endpoints para registrar y consultar venues o lugares")
 public class VenueController {
-    private final VenueService venueService;
+
+    private final VenueService service;
 
     @PostMapping
-    @Operation(summary = "Registrar lugar", description = "Valida y registra un lugar en memoria")
     public ResponseEntity<Venue> create(@RequestBody Venue venue) {
-        Venue createdVenue = venueService.create(venue);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdVenue);
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(venue));
     }
 
     @GetMapping
-    @Operation(summary = "Listar lugares", description = "Retorna todos los lugares registrados")
-    public ResponseEntity<List<Venue>> findAll() {
-        return ResponseEntity.ok(venueService.findAll());
+    public ResponseEntity<Page<Venue>> findAll(@PageableDefault(size = 5, sort = "nombre") Pageable pageable) {
+        return ResponseEntity.ok(service.findAll(pageable));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Venue> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.findById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Venue> update(@PathVariable Long id, @RequestBody Venue venue) {
+        return ResponseEntity.ok(service.update(id, venue));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
