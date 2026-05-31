@@ -1,7 +1,9 @@
 package com.eventify.config;
 
+import com.eventify.model.Category;
 import com.eventify.model.Event;
 import com.eventify.model.Venue;
+import com.eventify.service.CategoryService;
 import com.eventify.service.EventService;
 import com.eventify.service.VenueService;
 import org.springframework.boot.CommandLineRunner;
@@ -10,19 +12,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Configuration
 public class DataSeederConfig {
 
     @Bean
-    @ConditionalOnProperty(name = "eventify.seed.enabled", havingValue = "true", matchIfMissing = true)
-    public CommandLineRunner seedData(EventService eventService, VenueService venueService) {
+    @ConditionalOnProperty(name = "eventify.seed.enabled", havingValue = "true")
+    public CommandLineRunner seedData(EventService eventService, VenueService venueService, CategoryService categoryService) {
         return args -> {
-            venueService.create(new Venue(null, "Movistar Arena", "Diagonal 61C #26-36, Bogota", 14000));
-            venueService.create(new Venue(null, "Centro de Convenciones", "Av. Principal 123", 800));
-
-            eventService.create(new Event(null, "Concierto Rock", LocalDate.now().plusDays(30), "Evento musical de apertura"));
-            eventService.create(new Event(null, "Conferencia Tech", LocalDate.now().plusDays(45), "Evento de tecnologia y comunidad"));
+            Venue venue = venueService.create(new Venue(null, "Movistar Arena", "Diagonal 61C # 26-36", "Bogota", 14000));
+            Category category = categoryService.create(new Category(null, "Concerts", "Eventos musicales en vivo"));
+            Event event = new Event(null, "Concierto Rock", LocalDate.now().plusDays(30), "Evento musical de apertura");
+            event.setVenue(venue);
+            event.setCategories(Set.of(category));
+            eventService.create(event);
         };
     }
 }

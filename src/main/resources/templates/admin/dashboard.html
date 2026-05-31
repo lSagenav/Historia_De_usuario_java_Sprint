@@ -4,197 +4,89 @@
     <meta charset="UTF-8">
     <title>Panel Administrativo - Eventify</title>
     <style>
-        body{
-            font-family: Arial, sans-serif;
-            background:#f4f6f9;
-            margin:0;
-            padding:20px;
-        }
-
-        h1,h2{
-            color:#333;
-        }
-
-        .container{
-            width:90%;
-            margin:auto;
-        }
-
-        .card{
-            background:white;
-            padding:20px;
-            margin-bottom:30px;
-            border-radius:10px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        form{
-            display:flex;
-            flex-wrap:wrap;
-            gap:10px;
-            margin-bottom: 20px;
-        }
-
-        input{
-            padding:10px;
-            border:1px solid #ccc;
-            border-radius:5px;
-            flex:1;
-            min-width: 200px;
-        }
-
-        button{
-            padding:10px 20px;
-            background:#007bff;
-            color:white;
-            border:none;
-            border-radius:5px;
-            cursor:pointer;
-        }
-
-        button:hover{
-            background:#0056b3;
-        }
-
-        table{
-            width:100%;
-            border-collapse:collapse;
-            margin-top:15px;
-        }
-
-        table th,
-        table td{
-            border:1px solid #ddd;
-            padding:10px;
-            text-align:left;
-        }
-
-        table th{
-            background:#007bff;
-            color:white;
-        }
-
-        table tr:nth-child(even){
-            background:#f2f2f2;
-        }
-
-        .alert-info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            padding: 15px;
-            border-radius: 5px;
-            border: 1px solid #bee5eb;
-            margin-top: 15px;
-            font-weight: bold;
-        }
+        body{font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:20px;color:#333}
+        .container{width:92%;margin:auto}.card{background:white;padding:20px;margin-bottom:30px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+        form{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}.filter-form{align-items:end;background:#f8fbff;padding:12px;border-radius:8px}
+        input,select{padding:10px;border:1px solid #ccc;border-radius:5px;min-width:180px}.field{display:flex;flex-direction:column;gap:5px}.checkboxes{display:flex;gap:12px;flex-wrap:wrap;max-width:620px}
+        button,.btn{padding:10px 20px;background:#007bff;color:white;border:none;border-radius:5px;text-decoration:none;cursor:pointer}button:hover,.btn:hover{background:#0056b3}.btn.disabled{background:#999;pointer-events:none}
+        table{width:100%;border-collapse:collapse;margin-top:15px}th,td{border:1px solid #ddd;padding:10px;text-align:left}th{background:#007bff;color:white}tr:nth-child(even){background:#f2f2f2}
+        .alert-info{background:#d1ecf1;color:#0c5460;padding:15px;border-radius:5px;border:1px solid #bee5eb;margin-top:15px;font-weight:bold}.pager{display:flex;justify-content:space-between;align-items:center;margin-top:18px}.muted{color:#666;font-size:.9rem}.pill{display:inline-block;background:#e9f2ff;border:1px solid #c8ddff;border-radius:999px;padding:3px 8px;margin:2px}
     </style>
 </head>
 <body>
-
 <div class="container">
-
     <h1>Panel Administrativo Eventify</h1>
 
-    <!-- SECCIÓN DE EVENTOS -->
     <div class="card">
         <h2>Registrar Evento</h2>
-
         <form th:action="@{/admin/events}" th:object="${event}" method="post">
-            <input type="text"
-                   th:field="*{nombre}"
-                   placeholder="Nombre del evento"
-                   required>
-
-            <!-- NUEVO: Campo enlazado a la propiedad 'descripcion' de tu entidad Event -->
-            <input type="text"
-                   th:field="*{descripcion}"
-                   placeholder="Descripción detallada del evento"
-                   required>
-
-            <input type="date"
-                   th:field="*{fecha}"
-                   required>
-
+            <input type="text" th:field="*{nombre}" placeholder="Nombre del evento" required>
+            <input type="text" th:field="*{descripcion}" placeholder="Descripcion detallada" required>
+            <input type="date" th:field="*{fecha}" required>
+            <select name="venueId" required>
+                <option value="">Seleccione venue</option>
+                <option th:each="venueItem : ${venues}" th:value="${venueItem.id}" th:text="${venueItem.nombre + ' - ' + venueItem.ciudad}"></option>
+            </select>
+            <div class="checkboxes">
+                <label th:each="cat : ${categories}">
+                    <input type="checkbox" name="categoryIds" th:value="${cat.id}">
+                    <span th:text="${cat.name}"></span>
+                </label>
+            </div>
             <button type="submit">Guardar Evento</button>
         </form>
 
-        <!-- Escenario 2 de la HU: Mensaje amigable si no hay eventos -->
-        <div th:if="${#lists.isEmpty(events)}" class="alert-info">
-            Actualmente no hay eventos programados.
-        </div>
+        <h2>Catalogo de Eventos</h2>
+        <form class="filter-form" th:action="@{/admin}" method="get">
+            <div class="field"><label>Ciudad</label><input type="text" name="city" th:value="${city}" placeholder="bog"></div>
+            <div class="field"><label>Categoria</label><input type="text" name="category" th:value="${category}" placeholder="rock"></div>
+            <div class="field"><label>Capacidad minima</label><input type="number" name="minCapacity" th:value="${minCapacity}" min="1"></div>
+            <div class="field"><label>Desde</label><input type="date" name="startDate" th:value="${startDate}"></div>
+            <div class="field"><label>Hasta</label><input type="date" name="endDate" th:value="${endDate}"></div>
+            <input type="hidden" name="size" th:value="${size}">
+            <button type="submit">Filtrar</button>
+            <a class="btn" th:href="@{/admin(size=${size})}">Limpiar</a>
+        </form>
 
-        <!-- Escenario 1 de la HU: Se muestra la tabla solo si existen registros -->
+        <div th:if="${#lists.isEmpty(events)}" class="alert-info">Actualmente no hay eventos que coincidan con los filtros.</div>
         <table th:unless="${#lists.isEmpty(events)}">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Descripción</th>
-                <th>Fecha</th>
-            </tr>
-            </thead>
+            <thead><tr><th>ID</th><th>Nombre</th><th>Descripcion</th><th>Fecha</th><th>Venue</th><th>Ciudad</th><th>Categorias</th></tr></thead>
             <tbody>
             <tr th:each="eventItem : ${events}">
                 <td th:text="${eventItem.id}"></td>
                 <td th:text="${eventItem.nombre}"></td>
                 <td th:text="${eventItem.descripcion}"></td>
                 <td th:text="${eventItem.fecha}"></td>
+                <td th:text="${eventItem.venue.nombre}"></td>
+                <td th:text="${eventItem.venue.ciudad}"></td>
+                <td><span class="pill" th:each="cat : ${eventItem.categories}" th:text="${cat.name}"></span></td>
             </tr>
             </tbody>
         </table>
+        <div class="pager">
+            <a class="btn" th:classappend="${!eventSlice.hasPrevious()} ? ' disabled'" th:href="@{/admin(page=${page - 1},size=${size},city=${city},category=${category},minCapacity=${minCapacity},startDate=${startDate},endDate=${endDate})}">Anterior</a>
+            <span class="muted" th:text="${'Pagina ' + (page + 1) + ' - registros visibles: ' + eventSlice.numberOfElements}"></span>
+            <a class="btn" th:classappend="${!eventSlice.hasNext()} ? ' disabled'" th:href="@{/admin(page=${page + 1},size=${size},city=${city},category=${category},minCapacity=${minCapacity},startDate=${startDate},endDate=${endDate})}">Siguiente</a>
+        </div>
     </div>
 
-    <!-- SECCIÓN DE VENUES -->
     <div class="card">
         <h2>Registrar Venue (Lugar)</h2>
-
         <form th:action="@{/admin/venues}" th:object="${venue}" method="post">
-            <input type="text"
-                   th:field="*{nombre}"
-                   placeholder="Nombre del venue"
-                   required>
-
-            <input type="text"
-                   th:field="*{ciudad}"
-                   placeholder="Ciudad"
-                   required>
-
-            <!-- La capacidad se mantiene aquí para tu entidad Venue -->
-            <input type="number"
-                   th:field="*{capacidad}"
-                   placeholder="Capacidad máxima de personas"
-                   required>
-
+            <input type="text" th:field="*{nombre}" placeholder="Nombre del venue" required>
+            <input type="text" th:field="*{direccion}" placeholder="Direccion" required>
+            <input type="text" th:field="*{ciudad}" placeholder="Ciudad" required>
+            <input type="number" th:field="*{capacidad}" placeholder="Capacidad maxima" required>
             <button type="submit">Guardar Venue</button>
         </form>
-
-        <!-- Mensaje amigable si no hay venues registrados -->
-        <div th:if="${#lists.isEmpty(venues)}" class="alert-info">
-            Actualmente no hay lugares registrados en el sistema.
-        </div>
-
-        <!-- Tabla de Venues -->
+        <div th:if="${#lists.isEmpty(venues)}" class="alert-info">Actualmente no hay lugares registrados en el sistema.</div>
         <table th:unless="${#lists.isEmpty(venues)}">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Ciudad</th>
-                <th>Capacidad</th>
-            </tr>
-            </thead>
+            <thead><tr><th>ID</th><th>Nombre</th><th>Direccion</th><th>Ciudad</th><th>Capacidad</th></tr></thead>
             <tbody>
-            <tr th:each="venueItem : ${venues}">
-                <td th:text="${venueItem.id}"></td>
-                <td th:text="${venueItem.nombre}"></td>
-                <td th:text="${venueItem.ciudad}"></td>
-                <td th:text="${venueItem.capacidad}"></td>
-            </tr>
+            <tr th:each="venueItem : ${venues}"><td th:text="${venueItem.id}"></td><td th:text="${venueItem.nombre}"></td><td th:text="${venueItem.direccion}"></td><td th:text="${venueItem.ciudad}"></td><td th:text="${venueItem.capacidad}"></td></tr>
             </tbody>
         </table>
     </div>
-
 </div>
-
 </body>
 </html>

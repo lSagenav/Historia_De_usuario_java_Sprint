@@ -29,8 +29,8 @@ class VenueServiceTest {
 
     @Test
     void shouldCreateVenueWhenDataIsValid() {
-        Venue input = new Venue(null, "Teatro Central", "Calle 10", 500);
-        Venue saved = new Venue(1L, "Teatro Central", "Calle 10", 500);
+        Venue input = new Venue(null, "Teatro Central", "Calle 1 # 2-3", "Bogota", 500);
+        Venue saved = new Venue(1L, "Teatro Central", "Calle 1 # 2-3", "Bogota", 500);
         when(venueRepository.save(input)).thenReturn(saved);
 
         Venue result = venueService.create(input);
@@ -42,7 +42,7 @@ class VenueServiceTest {
 
     @Test
     void shouldThrowExceptionAndNotSaveWhenCapacityIsInvalid() {
-        Venue input = new Venue(null, "Teatro Central", "Calle 10", 0);
+        Venue input = new Venue(null, "Teatro Central", "Calle 1 # 2-3", "Bogota", 0);
 
         assertThrows(BadRequestException.class, () -> venueService.create(input));
 
@@ -51,11 +51,11 @@ class VenueServiceTest {
 
     @Test
     void shouldReturnEmptyListWhenRepositoryHasNoVenues() {
-        when(venueRepository.findAll()).thenReturn(List.of());
+        when(venueRepository.findAllByOrderByNombreAsc()).thenReturn(List.of());
 
         List<Venue> result = venueService.findAll();
 
         assertEquals(0, result.size());
-        verify(venueRepository).findAll();
+        verify(venueRepository).findAllByOrderByNombreAsc();
     }
 }
