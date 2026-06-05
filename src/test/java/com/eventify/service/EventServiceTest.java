@@ -1,6 +1,7 @@
 package com.eventify.service;
 
 import com.eventify.exception.BadRequestException;
+import com.eventify.mapper.EventMapper;
 import com.eventify.model.Category;
 import com.eventify.model.Event;
 import com.eventify.model.Venue;
@@ -34,6 +35,8 @@ class EventServiceTest {
     private VenueRepository venueRepository;
     @Mock
     private CategoryRepository categoryRepository;
+    @Mock
+    private EventMapper eventMapper;
 
     @InjectMocks
     private EventService eventService;

@@ -1,8 +1,14 @@
 package com.eventify.service;
 
 import com.eventify.dto.EventSummaryDTO;
+import com.eventify.dto.event.EventCreateDTO;
+import com.eventify.dto.event.EventResponseDTO;
+import com.eventify.dto.event.EventUpdateDTO;
 import com.eventify.exception.BadRequestException;
+import com.eventify.exception.BusinessRuleViolationException;
 import com.eventify.exception.NotFoundException;
+import com.eventify.exception.ResourceNotFoundException;
+import com.eventify.mapper.EventMapper;
 import com.eventify.model.Category;
 import com.eventify.model.Event;
 import com.eventify.model.Venue;
@@ -29,6 +35,15 @@ public class EventService {
     private final EventRepository eventRepository;
     private final VenueRepository venueRepository;
     private final CategoryRepository categoryRepository;
+    private final EventMapper eventMapper;
+
+    @Transactional
+    public EventResponseDTO create(EventCreateDTO dto) {
+        Event event = eventMapper.toEntity(dto);
+        event.setActive(true);
+        Event savedEvent = eventRepository.save(event);
+        return eventMapper.toResponse(savedEvent);
+    }
 
     @Transactional
     public Event create(Event event) {
@@ -36,6 +51,11 @@ public class EventService {
         event.setActive(event.getActive() == null ? true : event.getActive());
         resolveManagedRelations(event);
         return eventRepository.save(event);
+    }
+
+    @Transactional
+    public EventResponseDTO createFromForm(EventCreateDTO dto) {
+        return create(dto);
     }
 
     @Transactional
@@ -54,6 +74,14 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
+    public List<EventResponseDTO> findAllResponses() {
+        return eventRepository.findAllByOrderByFechaDesc()
+                .stream()
+                .map(eventMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public Page<Event> findPage(int page, int size, String sort) {
         Sort safeSort = parseSort(sort);
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.max(size, 1), safeSort);
@@ -61,9 +89,19 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
+    public Page<EventResponseDTO> findPageResponses(int page, int size, String sort) {
+        return findPage(page, size, sort).map(eventMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
     public Event findById(Long id) {
         return eventRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("No existe un evento activo con ID " + id));
+                .orElseThrow(() -> new NotFoundException("El evento con ID " + id + " no existe"));
+    }
+
+    @Transactional(readOnly = true)
+    public EventResponseDTO findByIdResponse(Long id) {
+        return eventMapper.toResponse(findById(id));
     }
 
     @Transactional
@@ -78,6 +116,22 @@ public class EventService {
         current.setActive(true);
         resolveManagedRelations(current);
         return eventRepository.save(current);
+    }
+
+    @Transactional
+    public EventResponseDTO update(Long id, EventUpdateDTO dto) {
+        if (dto.getId() != null && !dto.getId().equals(id)) {
+            throw new BusinessRuleViolationException("El ID del path no coincide con el ID del cuerpo de la peticion");
+        }
+        Event current = findById(id);
+        Event mappedEvent = eventMapper.toEntity(dto);
+        current.setNombre(mappedEvent.getNombre());
+        current.setFecha(mappedEvent.getFecha());
+        current.setDescripcion(mappedEvent.getDescripcion());
+        current.setVenue(mappedEvent.getVenue());
+        current.setCategories(mappedEvent.getCategories());
+        current.setActive(true);
+        return eventMapper.toResponse(eventRepository.save(current));
     }
 
     @Transactional(readOnly = true)
@@ -95,7 +149,7 @@ public class EventService {
     @Transactional
     public void softDelete(Long id) {
         if (eventRepository.softDeleteById(id) == 0) {
-            throw new NotFoundException("El evento indicado no existe o ya esta inactivo");
+            throw new ResourceNotFoundException("El evento con ID " + id + " no existe");
         }
     }
 

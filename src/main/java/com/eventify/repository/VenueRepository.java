@@ -11,4 +11,6 @@ public interface VenueRepository extends JpaRepository<Venue, Long> {
     List<Venue> findAllByOrderByNombreAsc();
 
     List<Venue> findByNombreContainingIgnoreCase(String nombre);
+
+    boolean existsByNombreIgnoreCase(String nombre);
 }

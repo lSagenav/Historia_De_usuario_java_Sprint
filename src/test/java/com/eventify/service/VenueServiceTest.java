@@ -1,6 +1,7 @@
 package com.eventify.service;
 
 import com.eventify.exception.BadRequestException;
+import com.eventify.mapper.VenueMapper;
 import com.eventify.model.Venue;
 import com.eventify.repository.VenueRepository;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,8 @@ class VenueServiceTest {
 
     @Mock
     private VenueRepository venueRepository;
+    @Mock
+    private VenueMapper venueMapper;
 
     @InjectMocks
     private VenueService venueService;

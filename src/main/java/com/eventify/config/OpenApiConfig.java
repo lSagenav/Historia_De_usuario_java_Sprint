@@ -14,8 +14,8 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Eventify API")
-                        .version("4.0.0")
-                        .description("API relacional para eventos, venues y categorias con Flyway, Slice, DTO records, filtros y soft delete auditable")
+                        .version("5.0.0")
+                        .description("API profesional para eventos con DTOs completos, MapStruct, validacion Jakarta, ProblemDetail RFC 7807, Slice, Flyway y soft delete")
                         .contact(new Contact().name("Equipo Eventify")));
     }
 }

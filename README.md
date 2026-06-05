@@ -1,11 +1,12 @@
-# Eventify - HU M6.1S1 a M6.1S4
+# Eventify - HU M6.1S1 a M6.1S5
 
-Proyecto Spring Boot alineado con las 4 historias de usuario acumuladas hasta Semana 4. Mantiene la base MVC/API/Swagger/testing de HU1, evoluciona a JPA + CRUD + paginacion de HU2, agrega panel administrativo Thymeleaf de HU3 e integra el modelo relacional avanzado, Flyway, soft delete, DTO record, Slice y filtros de HU4.
+Proyecto Spring Boot alineado con las historias de usuario acumuladas hasta Semana 5. Mantiene la base MVC/API/Swagger/testing de HU1, evoluciona a JPA + CRUD + paginacion de HU2, agrega panel administrativo Thymeleaf de HU3, integra relaciones/Flyway/soft delete/Slice de HU4 y suma desacoplamiento completo con DTOs, MapStruct, Jakarta Validation, validadores personalizados y manejo global de errores con Problem Details en HU5.
 
 ## Requisitos
 
 - Java 21
 - Maven 3.9+
+- MySQL local si vas a ejecutar con la configuracion actual de `application.properties`
 
 ## Ejecutar
 
@@ -17,15 +18,16 @@ La aplicacion queda disponible en:
 
 - Panel admin: `http://localhost:8080/admin`
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
-Base de datos local MySQL:
+Base de datos local MySQL configurada:
 
 ```txt
 Database: eventify_db
 Host: localhost
 Port: 3306
-User: root
-Password: 123$qwe
+User: configurar en src/main/resources/application.properties
+Password: configurar en src/main/resources/application.properties
 ```
 
 ## Ejecutar pruebas
@@ -50,8 +52,7 @@ mvn test
 
 - Entidades JPA con `@Entity`, `@Table`, `@Id`, `@GeneratedValue` y restricciones `@Column`.
 - Repositorios `JpaRepository`.
-- CRUD de eventos: `POST`, `GET`, `GET /{id}`, `PUT /{id}`, `DELETE /{id}`.
-- CRUD de venues: `POST`, `GET`, `GET /{id}`, `PUT /{id}`, `DELETE /{id}`.
+- CRUD de eventos y venues.
 - Respuestas `404 Not Found` para IDs inexistentes.
 - Endpoint con `Page` y metadatos: `GET /api/events/page?page=0&size=5&sort=nombre,asc`.
 - Endpoint con `Page` para venues: `GET /api/venues/page?page=0&size=10&sort=nombre,asc`.
@@ -60,10 +61,10 @@ mvn test
 ### HU3 - Panel administrativo visual
 
 - Vista Thymeleaf en `src/main/resources/templates/admin/dashboard.html`.
-- Uso de `th:each`, `th:text`, `th:if`, `th:unless`, `th:action` y `th:object`.
+- Uso de `th:each`, `th:text`, `th:if`, `th:unless`, `th:action`, `th:object`, `th:errors` y `th:errorclass`.
 - Formularios web para crear eventos y venues.
 - Controlador MVC `AdminViewController` bajo rutas `/admin`.
-- Patron Post-Redirect-Get tras guardar.
+- Patron Post-Redirect-Get tras guardar correctamente.
 - Separacion entre `/api/` y `/admin/`.
 - Tests MockMvc para rutas de interfaz.
 
@@ -87,6 +88,27 @@ mvn test
   - `V3__seed_masivo.sql` con 200 eventos, 10 venues y 7 categorias.
 - Panel admin con selector de venue, checkboxes de categorias y paginacion Anterior/Siguiente conservando filtros.
 
+### HU5 - DTOs, MapStruct, validacion y errores globales
+
+- DTOs de entrada y salida para `Event`, `Venue` y `Category`.
+- `EventCreateDTO` y `EventUpdateDTO` reciben `venueId` y `categoryIds` en lugar de entidades JPA completas.
+- `EventResponseDTO` devuelve `venueName` y `categoryNames` como datos planos.
+- `VenueCreateDTO`, `VenueUpdateDTO`, `VenueResponseDTO` separan la API de la entidad `Venue`.
+- `CategoryCreateDTO` y `CategoryResponseDTO` evitan exponer relaciones internas.
+- MapStruct integrado con `@Mapper(componentModel = "spring")`.
+- `EventReferenceMapper` resuelve relaciones por ID usando repositorios.
+- Validacion Jakarta en DTOs: `@NotBlank`, `@NotNull`, `@Size`, `@Future`, `@Min`, `@Max`.
+- Validador personalizado `@NoPastEvents` con `NoPastEventsValidator`.
+- Validation Groups para actualizacion: el ID es obligatorio en `EventUpdateDTO` y `VenueUpdateDTO`.
+- Excepciones de dominio: `ResourceNotFoundException`, `DuplicateResourceException`, `BusinessRuleViolationException`.
+- `@RestControllerAdvice` centralizado con `ProblemDetail` RFC 7807.
+- Errores de validacion retornan `400 Bad Request` con mapa `errors` campo -> mensaje.
+- Recursos no encontrados retornan `404` con `type`, `title`, `status`, `detail` e `instance`.
+- Duplicados retornan `409 Conflict`.
+- Thymeleaf muestra errores inline con `th:errors` y resalta campos con `th:errorclass="campo-invalido"`.
+- Mensajes flash de exito en operaciones del panel administrativo.
+- Swagger documenta DTOs, constraints y respuestas de error.
+
 ## Endpoints principales
 
 ### Eventos
@@ -101,15 +123,41 @@ PUT /api/events/{id}
 DELETE /api/events/{id}
 ```
 
-Ejemplo POST/PUT con relaciones existentes:
+Ejemplo POST `/api/events` con DTO de entrada:
 
 ```json
 {
   "nombre": "Concierto de ROCK",
-  "fecha": "2026-07-15",
+  "fecha": "2026-12-20",
   "descripcion": "Evento musical principal",
-  "venue": { "id": 1 },
-  "categories": [ { "id": 1 } ]
+  "venueId": 1,
+  "categoryIds": [1, 3, 5]
+}
+```
+
+Ejemplo respuesta `EventResponseDTO`:
+
+```json
+{
+  "id": 1,
+  "nombre": "Concierto de ROCK",
+  "fecha": "2026-12-20",
+  "descripcion": "Evento musical principal",
+  "venueName": "Movistar Arena",
+  "categoryNames": ["Concerts", "Conferences", "Festivals"]
+}
+```
+
+Ejemplo PUT `/api/events/1`:
+
+```json
+{
+  "id": 1,
+  "nombre": "Conferencia Tech Actualizada",
+  "fecha": "2026-12-22",
+  "descripcion": "Evento actualizado",
+  "venueId": 2,
+  "categoryIds": [2, 3]
 }
 ```
 
@@ -124,7 +172,7 @@ PUT /api/venues/{id}
 DELETE /api/venues/{id}
 ```
 
-Ejemplo Venue:
+Ejemplo POST `/api/venues`:
 
 ```json
 {
@@ -142,6 +190,34 @@ GET /api/categories
 POST /api/categories
 ```
 
+Ejemplo POST `/api/categories`:
+
+```json
+{
+  "name": "Technology",
+  "description": "Eventos de desarrollo, software e innovacion"
+}
+```
+
+## Ejemplo de error RFC 7807
+
+```json
+{
+  "type": "https://eventify.local/problems/400",
+  "title": "Datos de entrada invalidos",
+  "status": 400,
+  "detail": "La peticion contiene campos con errores de validacion",
+  "instance": "/api/events",
+  "timestamp": "2026-06-05T11:30:00",
+  "errors": {
+    "nombre": "no debe estar vacio",
+    "fecha": "debe ser una fecha futura"
+  }
+}
+```
+
 ## Notas
 
 El seed anterior por `CommandLineRunner` queda desactivado por defecto con `eventify.seed.enabled=false`, porque el seed oficial de Semana 4 esta en Flyway `V3` para evitar duplicados.
+
+En este entorno no se incluye Maven Wrapper. Si tu equipo no tiene Maven instalado, genera o agrega `mvnw` antes de ejecutar comandos Maven.

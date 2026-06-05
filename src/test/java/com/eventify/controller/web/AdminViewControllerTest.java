@@ -25,9 +25,11 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @WebMvcTest(AdminViewController.class)
 class AdminViewControllerTest {
@@ -65,4 +67,22 @@ class AdminViewControllerTest {
                 .andExpect(model().attributeExists("event"))
                 .andExpect(model().attributeExists("venue"));
     }
+
+    @Test
+    void shouldRenderValidationErrorsWhenEventFormIsInvalid() throws Exception {
+        Slice<Event> slice = new SliceImpl<>(List.of(), PageRequest.of(0, 20), false);
+        when(eventService.searchDetailed(isNull(), isNull(), isNull(), isNull(), isNull(), anyInt(), anyInt())).thenReturn(slice);
+        when(venueService.findAll()).thenReturn(List.of());
+        when(categoryService.findAll()).thenReturn(List.of());
+
+        mockMvc.perform(post("/admin/events")
+                        .param("nombre", "")
+                        .param("descripcion", "Descripcion corta")
+                        .param("fecha", LocalDate.now().minusDays(1).toString()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/dashboard"))
+                .andExpect(model().attributeHasFieldErrors("event", "nombre", "fecha", "venueId"))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("campo-invalido")));
+    }
+
 }
